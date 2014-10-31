@@ -82,6 +82,7 @@ void RobotOpenClass::begin(LoopCallback *enabledCallback, LoopCallback *disabled
     FramedBridge.begin(115200, onData);
 
     // for use w/ stm32
+    SPI.begin();
     SPI.setClockDivider(SPI_CLOCK_DIV8);
 
     // setup DS packet
