@@ -11,8 +11,8 @@
 extern PROGMEM const short crctab[];
 
 
-#define MAX_INCOMING_FRAME_SIZE 128
-#define MAX_OUTGOING_FRAME_SIZE 512
+#define MAX_INCOMING_FRAME_SIZE 150
+#define MAX_OUTGOING_FRAME_SIZE 450
 
 
 typedef void FrameCallback(byte *payload, uint16_t length);

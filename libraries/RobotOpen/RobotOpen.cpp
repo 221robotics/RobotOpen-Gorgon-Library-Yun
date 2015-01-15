@@ -198,6 +198,9 @@ void RobotOpenClass::syncDS() {
         onDisable();
     }
 
+    // check for data from the DS
+    FramedBridge.process();
+
     // send update to coprocessor
     xmitCoprocessor();
 
@@ -254,8 +257,8 @@ void RobotOpenClass::log(String data) {
         // xmit
         for (uint16_t i=0; i<dataLength+1; i++) {
             FramedBridge.write(logData[i]);
-            FramedBridge.send();
         }
+        FramedBridge.send();
     }
 }
 
@@ -428,8 +431,8 @@ void RobotOpenClass::publishDS() {
     // xmit
     for (uint16_t i=0; i<_outgoingPacketSize; i++) {
         FramedBridge.write(_outgoingPacket[i]);
-        FramedBridge.send();
     }
+    FramedBridge.send();
 
     _outgoingPacketSize = 0;
 }
@@ -587,8 +590,8 @@ void RobotOpenClass::sendParameters() {
     // xmit
     for (uint16_t i=0; i<_outgoingPacketSize; i++) {
         FramedBridge.write(_outgoingPacket[i]);
-        FramedBridge.send();
     }
+    FramedBridge.send();
 
     // no more outgoing data
     _outgoingPacketSize = 0;
