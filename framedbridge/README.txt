@@ -2,6 +2,7 @@ STEP ONE
 --------------
 Use PuTTY to SSH into the Yun's IP address. Username: root, Password: arduino
 
+
 STEP ONE
 --------------
 $ vim /etc/inittab
