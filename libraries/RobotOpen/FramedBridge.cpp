@@ -58,6 +58,7 @@ static byte _outgoingPacket[MAX_OUTGOING_FRAME_SIZE];
 static uint16_t _outgoingPacketIndex = 0;
 
 static unsigned long last_recv = 0;
+static bool initial_recv = false;
 
 // callback for data
 static FrameCallback *onFrame;
@@ -74,7 +75,13 @@ void FramedBridgeClass::process() {
     if (Serial1.available() > 0) {
         // read next byte
         byte c = Serial1.read();
+
+        // don't read anything in the first 60 seconds of boot (YUN)
+        if (millis() < (60 * 1000))
+            return;
+
         last_recv = millis();
+        initial_recv = true;
 
         // next char will be escaped
         if (c == 0x7D && !_escaped) {
@@ -148,7 +155,7 @@ void FramedBridgeClass::write(byte c) {
 
 void FramedBridgeClass::send() {
     // make sure we've received data recently, otherwise discard this packet
-    if ((millis() - last_recv) > 1000) {
+    if ((millis() - last_recv) > 1000 || !initial_recv) {
         clear();
         return;
     }
