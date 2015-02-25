@@ -12,7 +12,7 @@ extern PROGMEM const short crctab[];
 
 
 #define MAX_INCOMING_FRAME_SIZE 150
-#define MAX_OUTGOING_FRAME_SIZE 450
+#define MAX_OUTGOING_FRAME_SIZE 400
 
 
 typedef void FrameCallback(byte *payload, uint16_t length);
@@ -27,6 +27,8 @@ public:
     static void write(byte c);
     static void send();
     static void clear();
+
+    static void flush();
 private:
     // Parse out packet
     static void parseFrame();

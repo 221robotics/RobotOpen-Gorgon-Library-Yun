@@ -7,7 +7,6 @@
 #include <SPI.h>
 #include <EEPROM.h>
 #include <avr/pgmspace.h>
-#include <avr/wdt.h>
 #include "RobotOpen.h"
 
 
@@ -91,9 +90,6 @@ void RobotOpenClass::begin(LoopCallback *enabledCallback, LoopCallback *disabled
 
     // zero out solenoids and PWMs
     onDisable();
-
-    // watchdog go!
-    wdt_enable(WDTO_250MS);
 }
 
 void RobotOpenClass::beginCoprocessor() {
@@ -178,9 +174,6 @@ void RobotOpenClass::attachPWM(byte pwmChannel) {
 }
 
 void RobotOpenClass::syncDS() {
-    // feed watchdog
-    wdt_reset();
-  
     // detect disconnect
     if ((millis() - _lastControlPacket) > connection_timeout) {  // Disable the robot, drop the connection
         _enabled = false;
@@ -199,7 +192,10 @@ void RobotOpenClass::syncDS() {
     }
 
     // check for data from the DS
-    FramedBridge.process();
+    if (millis() > 60000) // wait 60s for Yun boot before touching serial
+        FramedBridge.process();
+    else
+        FramedBridge.flush();
 
     // send update to coprocessor
     xmitCoprocessor();

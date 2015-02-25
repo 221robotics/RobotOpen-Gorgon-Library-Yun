@@ -70,15 +70,15 @@ void FramedBridgeClass::begin(long baud, FrameCallback *frameCallback) {
     Serial1.begin(baud);
 }
 
+void FramedBridgeClass::flush() {
+    while (Serial1.read() != -1) {}
+}
+
 void FramedBridgeClass::process() {
     // data available from Yun processor?
     if (Serial1.available() > 0) {
         // read next byte
         byte c = Serial1.read();
-
-        // don't read anything in the first 60 seconds of boot (YUN)
-        if (millis() < (60 * 1000))
-            return;
 
         last_recv = millis();
         initial_recv = true;
@@ -140,13 +140,13 @@ void FramedBridgeClass::write(byte c) {
     // we need to escape any 'frame' or 'escape' bytes
     if (c == 0x7D || c == 0x7E) {
         // make sure there are at least 6 free bytes (escape + char + escaped crc16)
-        if (_outgoingPacketIndex + 6 > MAX_INCOMING_FRAME_SIZE)
+        if (_outgoingPacketIndex + 6 > MAX_OUTGOING_FRAME_SIZE)
             return;
 
         _outgoingPacket[_outgoingPacketIndex++] = c;
     } else {
         // make sure there are at least 5 free bytes (char + escaped crc16)
-        if (_outgoingPacketIndex + 5 > MAX_INCOMING_FRAME_SIZE)
+        if (_outgoingPacketIndex + 5 > MAX_OUTGOING_FRAME_SIZE)
             return;
 
         _outgoingPacket[_outgoingPacketIndex++] = c;
