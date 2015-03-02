@@ -8,8 +8,6 @@
 
 #include "Arduino.h"
 
-extern PROGMEM const short crctab[];
-
 
 #define MAX_INCOMING_FRAME_SIZE 150
 #define MAX_OUTGOING_FRAME_SIZE 400
@@ -32,9 +30,6 @@ public:
 private:
     // Parse out packet
     static void parseFrame();
-    
-    // CRC16 checksum function
-    static unsigned int calc_crc16(unsigned char *buf, unsigned short len);
 };
 
 extern FramedBridgeClass FramedBridge;

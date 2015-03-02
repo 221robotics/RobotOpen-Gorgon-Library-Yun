@@ -88,7 +88,7 @@ private:
     static void onDisable();
 
     // Callback for FramedBridge
-    static void onData(byte *payload, uint16_t length);
+    static void onData(byte *payload_ptr, uint16_t length);
 
     // Parse out a DS packet
     static void parsePacket();

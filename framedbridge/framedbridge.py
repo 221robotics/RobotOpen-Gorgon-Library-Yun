@@ -1,7 +1,3 @@
-from crc16 import CRC16
-
-
-
 class FramedBridge:
     # constructor takes a callback for decoded frames
     def __init__(self, cb):
@@ -13,14 +9,6 @@ class FramedBridge:
     # take a UDP packet buffer and frame it for the atmega
     def encode(self, buf):
         packet_buffer = bytearray()
-
-        # calculate crc
-        crc_calc = CRC16("".join(map(chr, buf)))
-        crc_calc_tuple = crc_calc.checksum()
-
-        # append crc16
-        buf.append(crc_calc_tuple[0])
-        buf.append(crc_calc_tuple[1])
 
         for c in buf:
             if c == 0x7D or c == 0x7E:
@@ -66,15 +54,8 @@ class FramedBridge:
         if len(self._currentFrame) == 0:
             return
 
-        # get checksum from frame
-        crc16_recv = (self._currentFrame[-2:][0], self._currentFrame[-2:][1])
+        # fire callback with frame
+        self._cb(self._currentFrame)
 
-        # calculate crc (ignore last two crc bytes)
-        crc_calc = CRC16("".join(map(chr, self._currentFrame[:-2])))
-
-        # compare checksums (tuples)
-        if crc16_recv == crc_calc.checksum():
-            # valid packet!
-            self._cb(self._currentFrame[:-2])
-
+        # clear our frame holder
         self._currentFrame = bytearray()
