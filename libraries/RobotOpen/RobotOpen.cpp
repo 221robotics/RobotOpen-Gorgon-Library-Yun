@@ -17,7 +17,7 @@
 #define DS_PUBLISH_INTERVAL_MS 100
 
 // Max packet sizes
-#define OUTGOING_PACKET_BUFFER_SIZE 384
+#define OUTGOING_PACKET_MAX_BYTES   384
 #define MAX_PARAMETERS              25  // 1 header byte + (5 * 25) + 2 crc bytes = 128 bytes max
 
 // joystick data
@@ -283,18 +283,16 @@ void RobotOpenClass::syncDS() {
 void RobotOpenClass::log(String data) {
     if (_acceptingDebugData) {
         int dataLength = data.length();
-        char logData[dataLength+1];
 
-        logData[0] = 'p';
+        // clear framedbridge buffer and begin writing of debug log
+        FramedBridge.clear();
+        FramedBridge.write('p');
 
-        for (int i=0; i < dataLength; i++) {
-            logData[i+1] = data[i];
+        for (int i=0; i < data.length(); i++) {
+            FramedBridge.write(data[i]);
         }
 
         // xmit
-        for (uint16_t i=0; i<dataLength+1; i++) {
-            FramedBridge.write(logData[i]);
-        }
         FramedBridge.send();
     }
 }
@@ -308,7 +306,7 @@ unsigned int RobotOpenClass::calc_crc16(unsigned char *buf, unsigned short len) 
 }
 
 boolean RobotOpenClass::publish(String id, byte val) {
-    if (_outgoingPacketSize+3+id.length() <= OUTGOING_PACKET_BUFFER_SIZE && _acceptingDSData) {
+    if (_outgoingPacketSize+3+id.length() <= OUTGOING_PACKET_MAX_BYTES && _acceptingDSData) {
         FramedBridge.write(0xFF & (3+id.length()));     // length
         FramedBridge.write('c');                        // type
         FramedBridge.write(0xFF & val);                 // value
@@ -329,7 +327,7 @@ boolean RobotOpenClass::publish(String id, byte val) {
 }
 
 boolean RobotOpenClass::publish(String id, int val) {
-    if (_outgoingPacketSize+4+id.length() <= OUTGOING_PACKET_BUFFER_SIZE && _acceptingDSData) {
+    if (_outgoingPacketSize+4+id.length() <= OUTGOING_PACKET_MAX_BYTES && _acceptingDSData) {
         FramedBridge.write(0xFF & (4+id.length()));     // length
         FramedBridge.write('i');                        // type
         FramedBridge.write((val >> 8) & 0xFF);          // value
@@ -350,7 +348,7 @@ boolean RobotOpenClass::publish(String id, int val) {
 }
 
 boolean RobotOpenClass::publish(String id, long val) {
-    if (_outgoingPacketSize+6+id.length() <= OUTGOING_PACKET_BUFFER_SIZE && _acceptingDSData) {
+    if (_outgoingPacketSize+6+id.length() <= OUTGOING_PACKET_MAX_BYTES && _acceptingDSData) {
         FramedBridge.write(0xFF & (6+id.length()));     // length
         FramedBridge.write('l');                        // type
         FramedBridge.write((val >> 24) & 0xFF);         // value
@@ -373,7 +371,7 @@ boolean RobotOpenClass::publish(String id, long val) {
 }
 
 boolean RobotOpenClass::publish(String id, float val) {
-    if (_outgoingPacketSize+6+id.length() <= OUTGOING_PACKET_BUFFER_SIZE && _acceptingDSData) {
+    if (_outgoingPacketSize+6+id.length() <= OUTGOING_PACKET_MAX_BYTES && _acceptingDSData) {
         union u_tag {
             byte b[4];
             float fval;
@@ -631,7 +629,7 @@ void RobotOpenClass::sendParameters() {
     for (int i = 0; i < paramsLength; i++) {
         ROParameter prm = *params[i];
 
-        if (_outgoingPacketSize+7+prm.label.length() <= OUTGOING_PACKET_BUFFER_SIZE) {
+        if (_outgoingPacketSize+7+prm.label.length() <= OUTGOING_PACKET_MAX_BYTES) {
             FramedBridge.write(0xFF & (7+prm.label.length()));         // length
             FramedBridge.write(0xFF & (prm.location));                 // address (0-99)
             FramedBridge.write(prm.type);                              // type
