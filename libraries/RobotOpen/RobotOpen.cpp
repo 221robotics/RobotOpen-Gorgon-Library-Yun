@@ -39,7 +39,6 @@ static unsigned char paramsLength = 0;
 // Hold DS/param data
 static boolean _acceptingDebugData = false;
 static boolean _acceptingDSData = false;
-static char _outgoingPacket[OUTGOING_PACKET_BUFFER_SIZE];      // Data to publish to DS is stored into this array
 static unsigned int _outgoingPacketSize = 0;
 
 // Robot specific stuff
@@ -233,7 +232,7 @@ void RobotOpenClass::syncDS() {
     if (millis() > 60000) // wait 60s for Yun boot before touching serial
         FramedBridge.process();
     else
-        FramedBridge.flush();
+        FramedBridge.clearSerial();
 
     // send update to coprocessor
     xmitCoprocessor();
@@ -247,7 +246,9 @@ void RobotOpenClass::syncDS() {
     // allow DS data to be published this loop if the interval has expired
     if ((millis() - _lastDSPublish) > DS_PUBLISH_INTERVAL_MS) {
         // add dashboard header byte
-        _outgoingPacket[0] = 'd';
+        FramedBridge.clear();
+        FramedBridge.write('d');
+
         _outgoingPacketSize = 1;
 
         _acceptingDSData = true;
@@ -273,6 +274,8 @@ void RobotOpenClass::syncDS() {
         publishDS();
     } else {
         // header byte can be ignored, we had nothing to publish
+        FramedBridge.clear();
+
         _outgoingPacketSize = 0;
     }
 }
@@ -306,12 +309,19 @@ unsigned int RobotOpenClass::calc_crc16(unsigned char *buf, unsigned short len) 
 
 boolean RobotOpenClass::publish(String id, byte val) {
     if (_outgoingPacketSize+3+id.length() <= OUTGOING_PACKET_BUFFER_SIZE && _acceptingDSData) {
-        _outgoingPacket[_outgoingPacketSize++] = 0xFF & (3+id.length());  // length
-        _outgoingPacket[_outgoingPacketSize++] = 'c'; // type
-        _outgoingPacket[_outgoingPacketSize++] = 0xFF & val;  // value
+        FramedBridge.write(0xFF & (3+id.length()));     // length
+        FramedBridge.write('c');                        // type
+        FramedBridge.write(0xFF & val);                 // value
+
+        // increment packet size by number of bytes above
+        _outgoingPacketSize += 3;
+
         for (int i = 0; i < id.length(); i++) {
-            _outgoingPacket[_outgoingPacketSize++] = id[i];   // identifier
+            FramedBridge.write(id[i]);                  // identifier
+
+            _outgoingPacketSize++;
         }
+
         return true;
     }
 
@@ -320,12 +330,18 @@ boolean RobotOpenClass::publish(String id, byte val) {
 
 boolean RobotOpenClass::publish(String id, int val) {
     if (_outgoingPacketSize+4+id.length() <= OUTGOING_PACKET_BUFFER_SIZE && _acceptingDSData) {
-        _outgoingPacket[_outgoingPacketSize++] = 0xFF & (4+id.length());  // length
-        _outgoingPacket[_outgoingPacketSize++] = 'i'; // type
-        _outgoingPacket[_outgoingPacketSize++] = (val >> 8) & 0xFF;  // value
-        _outgoingPacket[_outgoingPacketSize++] = val & 0xFF;  // value
+        FramedBridge.write(0xFF & (4+id.length()));     // length
+        FramedBridge.write('i');                        // type
+        FramedBridge.write((val >> 8) & 0xFF);          // value
+        FramedBridge.write(val & 0xFF);                 // value
+
+        // increment packet size by number of bytes above
+        _outgoingPacketSize += 4;
+
         for (int i = 0; i < id.length(); i++) {
-            _outgoingPacket[_outgoingPacketSize++] = id[i];   // identifier
+            FramedBridge.write(id[i]);                  // identifier
+
+            _outgoingPacketSize++;
         }
         return true;
     }
@@ -335,14 +351,20 @@ boolean RobotOpenClass::publish(String id, int val) {
 
 boolean RobotOpenClass::publish(String id, long val) {
     if (_outgoingPacketSize+6+id.length() <= OUTGOING_PACKET_BUFFER_SIZE && _acceptingDSData) {
-        _outgoingPacket[_outgoingPacketSize++] = 0xFF & (6+id.length());  // length
-        _outgoingPacket[_outgoingPacketSize++] = 'l'; // type
-        _outgoingPacket[_outgoingPacketSize++] = (val >> 24) & 0xFF;  // value
-        _outgoingPacket[_outgoingPacketSize++] = (val >> 16) & 0xFF;  // value
-        _outgoingPacket[_outgoingPacketSize++] = (val >> 8) & 0xFF;  // value
-        _outgoingPacket[_outgoingPacketSize++] = val & 0xFF;  // value
+        FramedBridge.write(0xFF & (6+id.length()));     // length
+        FramedBridge.write('l');                        // type
+        FramedBridge.write((val >> 24) & 0xFF);         // value
+        FramedBridge.write((val >> 16) & 0xFF);         // value
+        FramedBridge.write((val >> 8) & 0xFF);          // value
+        FramedBridge.write(val & 0xFF);                 // value
+
+        // increment packet size by number of bytes above
+        _outgoingPacketSize += 6;
+
         for (int i = 0; i < id.length(); i++) {
-            _outgoingPacket[_outgoingPacketSize++] = id[i];   // identifier
+            FramedBridge.write(id[i]);                   // identifier
+
+            _outgoingPacketSize++;
         }
         return true;
     }
@@ -358,14 +380,20 @@ boolean RobotOpenClass::publish(String id, float val) {
         } u;
         u.fval = val;
 
-        _outgoingPacket[_outgoingPacketSize++] = 0xFF & (6+id.length());  // length
-        _outgoingPacket[_outgoingPacketSize++] = 'f'; // type
-        _outgoingPacket[_outgoingPacketSize++] = u.b[3];  // value
-        _outgoingPacket[_outgoingPacketSize++] = u.b[2];  // value
-        _outgoingPacket[_outgoingPacketSize++] = u.b[1];  // value
-        _outgoingPacket[_outgoingPacketSize++] = u.b[0];  // value
+        FramedBridge.write(0xFF & (6+id.length()));     // length
+        FramedBridge.write('f');                        // type
+        FramedBridge.write(u.b[3]);                     // value
+        FramedBridge.write(u.b[2]);                     // value
+        FramedBridge.write(u.b[1]);                     // value
+        FramedBridge.write(u.b[0]);                     // value
+
+        // increment packet size by number of bytes above
+        _outgoingPacketSize += 6;
+
         for (int i = 0; i < id.length(); i++) {
-            _outgoingPacket[_outgoingPacketSize++] = id[i];   // identifier
+            FramedBridge.write(id[i]);                   // identifier
+
+            _outgoingPacketSize++;
         }
         return true;
     }
@@ -462,9 +490,6 @@ void RobotOpenClass::parsePacket() {
 
 void RobotOpenClass::publishDS() {
     // xmit
-    for (uint16_t i=0; i<_outgoingPacketSize; i++) {
-        FramedBridge.write(_outgoingPacket[i]);
-    }
     FramedBridge.send();
 
     _outgoingPacketSize = 0;
@@ -598,22 +623,30 @@ void RobotOpenClass::writeParameter(uint8_t location, unsigned int firstByte) {
 }
 
 void RobotOpenClass::sendParameters() {
-    _outgoingPacket[0] = 'r';
+    FramedBridge.clear();
+    FramedBridge.write('r');
+
     _outgoingPacketSize = 1;
 
     for (int i = 0; i < paramsLength; i++) {
         ROParameter prm = *params[i];
 
         if (_outgoingPacketSize+7+prm.label.length() <= OUTGOING_PACKET_BUFFER_SIZE) {
-            _outgoingPacket[_outgoingPacketSize++] = 0xFF & (7+prm.label.length());         // length
-            _outgoingPacket[_outgoingPacketSize++] = 0xFF & (prm.location);                 // address (0-99)
-            _outgoingPacket[_outgoingPacketSize++] = prm.type;                              // type
-            _outgoingPacket[_outgoingPacketSize++] = EEPROM.read(prm.location * 4);         // val1
-            _outgoingPacket[_outgoingPacketSize++] = EEPROM.read((prm.location * 4) + 1);   // val2
-            _outgoingPacket[_outgoingPacketSize++] = EEPROM.read((prm.location * 4) + 2);   // val3
-            _outgoingPacket[_outgoingPacketSize++] = EEPROM.read((prm.location * 4) + 3);   // val4
+            FramedBridge.write(0xFF & (7+prm.label.length()));         // length
+            FramedBridge.write(0xFF & (prm.location));                 // address (0-99)
+            FramedBridge.write(prm.type);                              // type
+            FramedBridge.write(EEPROM.read(prm.location * 4));         // val1
+            FramedBridge.write(EEPROM.read((prm.location * 4) + 1));   // val2
+            FramedBridge.write(EEPROM.read((prm.location * 4) + 2));   // val3
+            FramedBridge.write(EEPROM.read((prm.location * 4) + 3));   // val4
+
+            // increment packet size by number of bytes above
+            _outgoingPacketSize += 7;
+
             for (int j = 0; j < prm.label.length(); j++) {
-                _outgoingPacket[_outgoingPacketSize++] = prm.label[j];                      // identifier
+                FramedBridge.write(prm.label[j]);                      // identifier
+
+                _outgoingPacketSize++;
             }
         } else {
             break;
@@ -621,9 +654,6 @@ void RobotOpenClass::sendParameters() {
     }
 
     // xmit
-    for (uint16_t i=0; i<_outgoingPacketSize; i++) {
-        FramedBridge.write(_outgoingPacket[i]);
-    }
     FramedBridge.send();
 
     // no more outgoing data

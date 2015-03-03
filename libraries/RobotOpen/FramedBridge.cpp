@@ -33,7 +33,7 @@ void FramedBridgeClass::begin(long baud, FrameCallback *frameCallback) {
     Serial1.begin(baud);
 }
 
-void FramedBridgeClass::flush() {
+void FramedBridgeClass::clearSerial() {
     while (Serial1.read() != -1) {}
 }
 

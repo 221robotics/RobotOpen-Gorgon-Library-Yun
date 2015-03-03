@@ -10,7 +10,7 @@
 
 
 #define MAX_INCOMING_FRAME_SIZE 150
-#define MAX_OUTGOING_FRAME_SIZE 400
+#define MAX_OUTGOING_FRAME_SIZE 450
 
 
 typedef void FrameCallback(byte *payload, uint16_t length);
@@ -26,7 +26,7 @@ public:
     static void send();
     static void clear();
 
-    static void flush();
+    static void clearSerial();
 private:
     // Parse out packet
     static void parseFrame();
