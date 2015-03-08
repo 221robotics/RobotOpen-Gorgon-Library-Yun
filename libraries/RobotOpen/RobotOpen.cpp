@@ -96,7 +96,7 @@ PROGMEM const short crctab[] =
 
 // Networking support
 static unsigned char *_incomingPacket;
-static unsigned int _incomingPacketSize = 0;
+static uint16_t _incomingPacketSize = 0;
 
 // Class constructor
 RobotOpenClass RobotOpen;
@@ -229,10 +229,7 @@ void RobotOpenClass::syncDS() {
     }
 
     // check for data from the DS
-    if (millis() > 60000) // wait 60s for Yun boot before touching serial
-        FramedBridge.process();
-    else
-        FramedBridge.clearSerial();
+    FramedBridge.process();
 
     // send update to coprocessor
     xmitCoprocessor();
@@ -427,6 +424,8 @@ void RobotOpenClass::parsePacket() {
     unsigned int crc16_recv = (_incomingPacket[_incomingPacketSize - 2] << 8) | _incomingPacket[_incomingPacketSize - 1];
     
     if (calc_crc16(_incomingPacket, _incomingPacketSize - 2) == crc16_recv) {
+        FramedBridge.validPacket();
+
         // control packet is 'c' + joystick data + crc16
         int frameLength = (_incomingPacketSize - 3);
         int numParameters;

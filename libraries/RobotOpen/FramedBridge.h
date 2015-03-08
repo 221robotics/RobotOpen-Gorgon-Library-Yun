@@ -26,7 +26,7 @@ public:
     static void send();
     static void clear();
 
-    static void clearSerial();
+    static void validPacket();
 private:
     // Parse out packet
     static void parseFrame();

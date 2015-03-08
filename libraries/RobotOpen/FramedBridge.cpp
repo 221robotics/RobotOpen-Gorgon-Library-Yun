@@ -14,7 +14,6 @@ FramedBridgeClass FramedBridge;
 static byte _incomingPacket[MAX_INCOMING_FRAME_SIZE];
 static uint16_t _incomingPacketIndex = 0;
 static bool _escaped = false;
-static bool _waitForFrame = false;
 
 // tx vars
 static byte _outgoingPacket[MAX_OUTGOING_FRAME_SIZE];
@@ -33,30 +32,28 @@ void FramedBridgeClass::begin(long baud, FrameCallback *frameCallback) {
     Serial1.begin(baud);
 }
 
-void FramedBridgeClass::clearSerial() {
-    while (Serial1.read() != -1) {}
+void FramedBridgeClass::validPacket() {
+    initial_recv = true;
 }
 
 void FramedBridgeClass::process() {
     // data available from Yun processor?
-    if (Serial1.available() > 0) {
+    while (Serial1.available() > 0) {
         // read next byte
         byte c = Serial1.read();
 
         last_recv = millis();
-        initial_recv = true;
 
         // next char will be escaped
-        if (c == 0x7D && !_escaped) {
+        if (c == 0x7D) {
             // ESCAPE
             _escaped = true;
-        } else if (c == 0x7E && !_escaped) {
+        } else if (c == 0x7E) {
             // FLAG
-
             parseFrame();
 
             _incomingPacketIndex = 0;
-            _waitForFrame = false;
+            _escaped = false;
         } else {
             // PAYLOAD
 
@@ -68,16 +65,11 @@ void FramedBridgeClass::process() {
             _escaped = false;
 
             // don't buffer any data past MAX_FRAME_SZE
-            if (_waitForFrame)
+            if (_incomingPacketIndex >= MAX_INCOMING_FRAME_SIZE)
                 return;
 
             // buffer incoming byte
             _incomingPacket[_incomingPacketIndex++] = c;
-        }
-
-        if (_incomingPacketIndex >= MAX_INCOMING_FRAME_SIZE) {
-            // no more data until next frame
-            _waitForFrame = true;
         }
     }
 }
