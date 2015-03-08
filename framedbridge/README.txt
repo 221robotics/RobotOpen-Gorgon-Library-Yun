@@ -5,13 +5,11 @@ Use PuTTY to SSH into the Yun's IP address. Username: root, Password: arduino
 
 STEP ONE
 --------------
-$ vim /etc/inittab
+$ nano /etc/inittab
 
 In the inittab file, comment out the line beginning with ttyATH0:
 
 # ttyATH0::askfirst:/bin/ash --login
-
-$ reboot -f
 
 
 STEP TWO
