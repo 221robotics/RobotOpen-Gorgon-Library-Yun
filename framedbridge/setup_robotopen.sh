@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # RobotOpen Yun Setup Script v1.0 [03.09.15]
 # Install via curl -sSLk https://raw.githubusercontent.com/221robotics/RobotOpen-Gorgon-Library-Yun/master/framedbridge/setup_robotopen.sh | sh
 
