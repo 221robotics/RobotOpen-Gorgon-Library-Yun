@@ -6,6 +6,13 @@
 # disable arduino bridge
 sed -i '/ttyATH0/ s?^?#?' /etc/inittab
 
+# update package manager
+opkg update
+# install wget
+opkg install wget
+# install pyserial
+opkg install pyserial
+
 # make sure we're in the root dir
 cd /root
 
@@ -18,11 +25,6 @@ cd framedbridge
 # download framedbridge from github
 wget --no-check-certificate https://raw.githubusercontent.com/221robotics/RobotOpen-Gorgon-Library-Yun/master/framedbridge/framedbridge.py
 wget --no-check-certificate https://raw.githubusercontent.com/221robotics/RobotOpen-Gorgon-Library-Yun/master/framedbridge/udp_server.py
-
-# update package manager
-opkg update
-# install pyserial
-opkg install pyserial
 
 # start framedbridge on boot
 sed -i '/exit 0/i python /root/framedbridge/udp_server.py' /etc/rc.local
