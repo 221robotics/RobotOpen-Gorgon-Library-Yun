@@ -28,4 +28,4 @@ opkg install pyserial
 sed -i '/exit 0/i python /root/framedbridge/udp_server.py' /etc/rc.local
 
 # done, let's reboot this sucker
-read -p "Success! Press [Enter] to finish and reboot..."
+echo "Success! Please reboot your Yun to activate RobotOpen (reboot -f)"
