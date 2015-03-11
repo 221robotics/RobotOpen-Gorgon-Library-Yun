@@ -211,6 +211,9 @@ void RobotOpenClass::attachPWM(byte pwmChannel) {
 }
 
 void RobotOpenClass::syncDS() {
+    // check for data from the DS
+    FramedBridge.process();
+
     // detect disconnect
     if ((millis() - _lastControlPacket) > connection_timeout) {  // Disable the robot, drop the connection
         _enabled = false;
@@ -233,6 +236,9 @@ void RobotOpenClass::syncDS() {
 
     // send update to coprocessor
     xmitCoprocessor();
+
+    // check for data from the DS
+    FramedBridge.process();
 
     // allow debug data to be published if the interval has expired
     if ((millis() - _lastDebugDataPublish) > DEBUG_DATA_INTERVAL_MS) {
@@ -259,6 +265,9 @@ void RobotOpenClass::syncDS() {
         whileEnabled();
     else if (!_enabled && whileDisabled)
         whileDisabled();
+
+    // check for data from the DS
+    FramedBridge.process();
 
     // make sure we accept no more debug data until the next interval
     _acceptingDebugData = false;

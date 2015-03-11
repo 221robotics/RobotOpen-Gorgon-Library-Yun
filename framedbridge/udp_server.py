@@ -38,6 +38,15 @@ def onDecodedFrameCallback(frame):
 fb = FramedBridge(onDecodedFrameCallback)
 
 
+# used to split packets into smaller chunks
+# http://code.activestate.com/recipes/425397-split-a-list-into-roughly-equal-sized-pieces/
+def split_seq(seq, size):
+        newseq = []
+        splitsize = 1.0/size*len(seq)
+        for i in range(size):
+                newseq.append(seq[int(round(i*splitsize)):int(round((i+1)*splitsize))])
+        return newseq
+
 
 while True:
     # check if there is any data waiting via the UDP socket
@@ -53,11 +62,18 @@ while True:
         # UDP port of the DS
         recvPort = addr[1]
 
-        # encode UDP packet into FramedBridge frame
+        # encode UDP packet into FramedBridge frame and split into 2 pieces
         encodedFrame = fb.encode(bytearray(data))
+        splitFrames = split_seq(encodedFrame, 2)
 
-        # write the framedbridge packet to the atmega
-        sp.write(''.join(chr(b) for b in encodedFrame))
+        # write the framedbridge packet (first half) to the atmega
+        sp.write(''.join(chr(b) for b in splitFrames[0]))
+
+        # give the arduino a short break to catch up (small serial buffer)
+        time.sleep(0.006)
+
+        # write the framedbridge packet (second half) to the atmega
+        sp.write(''.join(chr(b) for b in splitFrames[1]))
 
     # read from serial
     while (sp.inWaiting() > 0):

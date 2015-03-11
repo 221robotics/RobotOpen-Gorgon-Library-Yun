@@ -42,8 +42,6 @@ void FramedBridgeClass::process() {
         // read next byte
         byte c = Serial1.read();
 
-        last_recv = millis();
-
         // next char will be escaped
         if (c == 0x7D) {
             // ESCAPE
@@ -78,6 +76,9 @@ void FramedBridgeClass::process() {
 void FramedBridgeClass::parseFrame() {
     if (_incomingPacketIndex == 0)
         return;
+
+    // keep track of the last time we parsed a packet
+    last_recv = millis();
 
     // if the callback exists, fire it with the frame and frame length as parameters
     if (onFrame)
