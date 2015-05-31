@@ -35,6 +35,7 @@ wget --no-check-certificate https://raw.githubusercontent.com/221robotics/RobotO
 if grep -Fq "udp_server" /etc/rc.local
 then
     # found line, no need to add anything
+    echo "udp_server already set to start on boot"
 else
     # did not find line, need to add it
     sed -i '/exit 0/i python /root/framedbridge/udp_server.py' /etc/rc.local
@@ -44,6 +45,7 @@ fi
 if grep -Fq "eeprom:r:" /usr/bin/run-avrdude
 then
     # found line, no need to add anything
+    echo "EEPROM is already set to be read on code upload"
 else
     # did not find line, need to add it
     sed 's+.*avrdude.*+avrdude -c linuxgpio -C /etc/avrdude.conf -p m32u4 -U eeprom:r:/tmp/eeprom.bin:r\n&+' /usr/bin/run-avrdude
