@@ -48,7 +48,7 @@ then
     echo "EEPROM is already set to be read on code upload"
 else
     # did not find line, need to add it
-    sed 's+.*avrdude.*+avrdude -c linuxgpio -C /etc/avrdude.conf -p m32u4 -U eeprom:r:/tmp/eeprom.bin:r\n&+' /usr/bin/run-avrdude
+    sed -i 's+.*avrdude.*+avrdude -c linuxgpio -C /etc/avrdude.conf -p m32u4 -U eeprom:r:/tmp/eeprom.bin:r\n&+' /usr/bin/run-avrdude
 fi
 
 # ensure that we always write the contents of the EEPROM back to the chip when the Yun is being programmed via the network
