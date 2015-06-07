@@ -75,7 +75,7 @@ void FramedBridgeClass::process() {
         processedData = true;
     }
 
-    if (processedData) {
+    if (processedData && ((millis() - last_recv) <= 1000) && initial_recv) {
         // write our flow control byte of 0x7F to indicate that our buffer is now empty
         Serial1.write(0x7F);
     }
