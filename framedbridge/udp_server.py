@@ -1,7 +1,3 @@
-# opkg update
-# opkg install pyserial
-
-
 import socket
 import time
 import serial
@@ -23,7 +19,8 @@ sock.bind((UDP_IP, UDP_PORT))
 
 # outgoing buffer vars
 pendingTxBuffer = bytearray()
-readyToSend = False
+readyToSend = True
+lastRx = 0
 
 
 # setup the serial port
@@ -38,19 +35,12 @@ def onDecodedFrameCallback(frame):
         # send the robotopen packet to the DS
         sock.sendto(frame, (recvIp, recvPort))
 
-
 # framedbridge flow control CTS callback
 def onClearToSendCallback():
     readyToSend = True
-    print 'time to xmit'
-
 
 # framedbridge instance
 fb = FramedBridge(onDecodedFrameCallback, onClearToSendCallback)
-
-
-
-
 
 
 while True:
@@ -67,19 +57,33 @@ while True:
         # UDP port of the DS
         recvPort = addr[1]
 
-        # encode UDP packet into FramedBridge frame and split into 2 pieces
+        # encode UDP packet into FramedBridge frame
         encodedFrame = fb.encode(bytearray(data))
 
-        # if this is a heartbeat packet, send immediately (it's only 3 bytes)
-        if chr(encodedFrame[0]) == 'h':
-            sp.write(''.join(chr(b) for b in encodedFrame))
-
-            # clear anything in the outgoing buffer (since the robot is now disabled)
-            # ??? is this a problem if we are sending a setparameter packet while disabled?
+        # if we haven't seen data from the DS in the last second
+        # assume that the robot and DS were 'disconnected'
+        # therefore, we can clear our outgoing buffer
+        if (time.time() - lastRx) > 1.0:
             pendingTxBuffer = bytearray()
-        else:
-            # need to split up packet into 64 byte chunks, buffer the remaining bytes until we receive CTS
-            pass
+            readyToSend = True
+
+        # append the bytes that just came in to our byte buffer
+        pendingTxBuffer = pendingTxBuffer + encodedFrame
+
+        # remember the last time we received data from the DS
+        lastRx = time.time()
+
+
+    # check if atmega is ready to receive and that we have data in our buffer
+    if readyToSend and len(pendingTxBuffer) > 0:
+        # write up to 64 bytes of our buffer to the atmega
+        # if anything remains, store it back into our tx buffer
+        sp.write(''.join(chr(b) for b in pendingTxBuffer[0:64]))
+        pendingTxBuffer = pendingTxBuffer[64:]
+
+        # need to wait for the atmega to clear us to transmit again
+        readyToSend = False
+
 
     # read from serial
     while (sp.inWaiting() > 0):
