@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # RobotOpen Yun Setup Script v1.0 [03.09.15]
-# Install via curl -sSLk https://raw.githubusercontent.com/221robotics/RobotOpen-Gorgon-Library-Yun/master/framedbridge/setup_robotopen.sh | sh
+# Install via curl -sSLk https://raw.githubusercontent.com/221robotics/RobotOpen-Gorgon-Library-Yun/flowcontrol/framedbridge/setup_robotopen.sh | sh
 
 # disable arduino bridge
 sed -i '/ttyATH0::askfirst:/c\#ttyATH0::askfirst:/bin/ash --login' /etc/inittab
@@ -28,8 +28,8 @@ mkdir framedbridge
 cd framedbridge
 
 # download framedbridge from github
-wget --no-check-certificate https://raw.githubusercontent.com/221robotics/RobotOpen-Gorgon-Library-Yun/master/framedbridge/framedbridge.py
-wget --no-check-certificate https://raw.githubusercontent.com/221robotics/RobotOpen-Gorgon-Library-Yun/master/framedbridge/udp_server.py
+wget --no-check-certificate https://raw.githubusercontent.com/221robotics/RobotOpen-Gorgon-Library-Yun/flowcontrol/framedbridge/framedbridge.py
+wget --no-check-certificate https://raw.githubusercontent.com/221robotics/RobotOpen-Gorgon-Library-Yun/flowcontrol/framedbridge/udp_server.py
 
 # start framedbridge on boot
 if grep -Fq "udp_server" /etc/rc.local
