@@ -37,6 +37,7 @@ def onDecodedFrameCallback(frame):
 
 # framedbridge flow control CTS callback
 def onClearToSendCallback():
+    global readyToSend
     readyToSend = True
 
 # framedbridge instance
