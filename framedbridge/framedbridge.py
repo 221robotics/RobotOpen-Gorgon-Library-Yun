@@ -1,7 +1,8 @@
 class FramedBridge:
     # constructor takes a callback for decoded frames
-    def __init__(self, cb):
-        self._cb = cb
+    def __init__(self, dataCb, ctsCb):
+        self._dataCb = dataCb
+        self._ctsCb = ctsCb
         self._escaped = False
         self._currentFrame = bytearray()
 
@@ -35,6 +36,9 @@ class FramedBridge:
             elif c == 0x7E and not self._escaped:
                 # FLAG
                 self.parseFrame()
+            elif c == 0x7F and not self._escaped:
+                # FLOW CONTROL (CTS)
+                self._ctsCb()
             else:
                 # PAYLOAD
 
@@ -55,7 +59,7 @@ class FramedBridge:
             return
 
         # fire callback with frame
-        self._cb(self._currentFrame)
+        self._dataCb(self._currentFrame)
 
         # clear our frame holder
         self._currentFrame = bytearray()

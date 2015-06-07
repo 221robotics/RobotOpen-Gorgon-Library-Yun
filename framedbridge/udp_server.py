@@ -21,31 +21,36 @@ UDP_PORT = 22211
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind((UDP_IP, UDP_PORT))
 
+# outgoing buffer vars
+pendingTxBuffer = bytearray()
+readyToSend = False
+
 
 # setup the serial port
 usbPort = '/dev/ttyATH0'
 sp = serial.Serial(usbPort, 115200, timeout=1)
 
 
-# framedbridge callback
+# framedbridge data ready callback
 def onDecodedFrameCallback(frame):
     # make sure a dashboard has connected and sent us data
     if recvPort != 0:
         # send the robotopen packet to the DS
         sock.sendto(frame, (recvIp, recvPort))
 
+
+# framedbridge flow control CTS callback
+def onClearToSendCallback():
+    readyToSend = True
+    print 'time to xmit'
+
+
 # framedbridge instance
-fb = FramedBridge(onDecodedFrameCallback)
+fb = FramedBridge(onDecodedFrameCallback, onClearToSendCallback)
 
 
-# used to split packets into smaller chunks
-# http://code.activestate.com/recipes/425397-split-a-list-into-roughly-equal-sized-pieces/
-def split_seq(seq, size):
-        newseq = []
-        splitsize = 1.0/size*len(seq)
-        for i in range(size):
-                newseq.append(seq[int(round(i*splitsize)):int(round((i+1)*splitsize))])
-        return newseq
+
+
 
 
 while True:
@@ -64,16 +69,17 @@ while True:
 
         # encode UDP packet into FramedBridge frame and split into 2 pieces
         encodedFrame = fb.encode(bytearray(data))
-        splitFrames = split_seq(encodedFrame, 2)
 
-        # write the framedbridge packet (first half) to the atmega
-        sp.write(''.join(chr(b) for b in splitFrames[0]))
+        # if this is a heartbeat packet, send immediately (it's only 3 bytes)
+        if chr(encodedFrame[0]) == 'h':
+            sp.write(''.join(chr(b) for b in encodedFrame))
 
-        # give the arduino a short break to catch up (small serial buffer)
-        time.sleep(0.006)
-
-        # write the framedbridge packet (second half) to the atmega
-        sp.write(''.join(chr(b) for b in splitFrames[1]))
+            # clear anything in the outgoing buffer (since the robot is now disabled)
+            # ??? is this a problem if we are sending a setparameter packet while disabled?
+            pendingTxBuffer = bytearray()
+        else:
+            # need to split up packet into 64 byte chunks, buffer the remaining bytes until we receive CTS
+            pass
 
     # read from serial
     while (sp.inWaiting() > 0):
