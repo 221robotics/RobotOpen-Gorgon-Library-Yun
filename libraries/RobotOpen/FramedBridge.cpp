@@ -37,6 +37,8 @@ void FramedBridgeClass::validPacket() {
 }
 
 void FramedBridgeClass::process() {
+    bool processedData = false;
+
     // data available from Yun processor?
     while (Serial1.available() > 0) {
         // read next byte
@@ -69,6 +71,13 @@ void FramedBridgeClass::process() {
             // buffer incoming byte
             _incomingPacket[_incomingPacketIndex++] = c;
         }
+
+        processedData = true;
+    }
+
+    if (processedData) {
+        // write our flow control byte of 0x7F to indicate that our buffer is now empty
+        Serial1.write(0x7F);
     }
 }
 
@@ -88,7 +97,7 @@ void FramedBridgeClass::parseFrame() {
 
 void FramedBridgeClass::write(byte c) {
     // we need to escape any 'frame' or 'escape' bytes
-    if (c == 0x7D || c == 0x7E) {
+    if (c == 0x7D || c == 0x7E || c == 0x7F) {
         // make sure there are at least 2 free bytes (escape + char)
         if (_outgoingPacketIndex + 2 > MAX_OUTGOING_FRAME_SIZE)
             return;
@@ -112,7 +121,7 @@ void FramedBridgeClass::send() {
 
     // write buffer
     for (uint16_t i = 0; i < _outgoingPacketIndex; i++) {
-        if (_outgoingPacket[i] == 0x7D || _outgoingPacket[i] == 0x7E) {
+        if (_outgoingPacket[i] == 0x7D || _outgoingPacket[i] == 0x7E || _outgoingPacket[i] == 0x7F) {
             Serial1.write(0x7D);
             Serial1.write(_outgoingPacket[i] ^ 0x20);
         } else {
