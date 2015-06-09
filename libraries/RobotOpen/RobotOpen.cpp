@@ -133,6 +133,9 @@ void RobotOpenClass::beginCoprocessor() {
     // for use w/ stm32
     SPI.setClockDivider(SPI_CLOCK_DIV16);
 
+    // disable interrupts (coprocessor timing is critical)
+    noInterrupts();
+
     // enable Slave Select
     digitalWrite(9, LOW);
 
@@ -144,6 +147,9 @@ void RobotOpenClass::beginCoprocessor() {
 void RobotOpenClass::endCoprocessor() {
     // disable Slave Select
     digitalWrite(9, HIGH);
+
+    // re-enable interrupts
+    interrupts();
 }
 
 // This gets called once when the robot becomes disconnected or disabled
